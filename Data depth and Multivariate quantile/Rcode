@@ -1,0 +1,118 @@
+#Question 1
+library(ggplot2)
+library(geometry)
+library(ddalpha)
+
+data(iris)
+
+setosa <- subset(iris, Species == "setosa")
+virginica <- subset(iris, Species == "virginica")
+versicolor <- subset(iris, Species == "versicolor")
+
+
+setosa_matrix <- as.matrix(setosa[, 1:4])
+virginica_matrix <- as.matrix(virginica[, 1:4])
+versicolor_matrix <- as.matrix(versicolor[, 1:4])
+
+
+setosa_depths <- depth.halfspace(setosa_matrix, iris[, 1:4], exact = FALSE)
+virginica_depths <- depth.halfspace(virginica_matrix, iris[, 1:4], exact = FALSE)
+versicolor_depths <- depth.halfspace(versicolor_matrix, iris[, 1:4], exact = FALSE)
+
+depth_data <- data.frame(
+  Class = rep(c("Setosa", "Virginica", "Versicolor"), each = length(setosa_depths)),
+  Depth = c(setosa_depths, virginica_depths, versicolor_depths)
+)
+
+# Boxplot
+ggplot(depth_data, aes(x = Class, y = Depth, fill = Class)) +
+  geom_boxplot() +
+  labs(title = "Halfspace Data Depths Comparison",
+       x = "Class",
+       y = "Data Depth") +
+  theme_minimal()
+
+# Jitter plot
+ggplot(depth_data, aes(x = Class, y = Depth, color = Class)) +
+  geom_jitter(position = position_jitter(width = 0.2), size = 2) +
+  labs(title = "Halfspace Data Depths Comparison",
+       x = "Class",
+       y = "Data Depth") +
+  theme_minimal()
+
+
+
+
+
+
+data(iris)
+setosa <- subset(iris, Species == "setosa")
+virginica<- subset(iris, Species == "virginica")
+versicolor <- subset(iris, Species == "versicolor")
+
+
+
+#Sepal Length Histogram
+par(mfrow = c(1, 1))
+hist(setosa$Sepal.Length, col = rgb(1, 0, 0, alpha = 0.5), main = "Sepal Length Histogram", xlab = "Sepal Length", ylab = "Frequency", ylim = c(0, 25), xlim = c(4, 8), border = "white")
+hist(virginica$Sepal.Length, col = rgb(0, 0, 1, alpha = 0.5), add = TRUE, border = "white")
+hist(versicolor$Sepal.Length, col = rgb(0, 1, 0, alpha = 0.5), add = TRUE, border = "white")
+legend("topright", legend = levels(iris$Species), fill = c(rgb(1, 0, 0, alpha = 0.5), rgb(0, 0, 1, alpha = 0.5), rgb(0, 1, 0, alpha = 0.5)))
+title(main = "Sepal Length Histogram")
+par(mfrow = c(1, 1))
+
+
+
+#Sepal Width Histogram"
+
+par(mfrow = c(1, 1))
+hist(setosa$Sepal.Width, col = rgb(1, 0, 0, alpha = 0.5), main = "Sepal Width Histogram", xlab = "Sepal Width", ylab = "Frequency", ylim = c(0, 35), xlim = c(2, 4.5), border = "white")
+hist(virginica$Sepal.Width, col = rgb(0, 0, 1, alpha = 0.5), add = TRUE, border = "white")
+hist(versicolor$Sepal.Width, col = rgb(0, 1, 0, alpha = 0.5), add = TRUE, border = "white")
+legend("topright", legend = levels(iris$Species), fill = c(rgb(1, 0, 0, alpha = 0.5), rgb(0, 0, 1, alpha = 0.5), rgb(0, 1, 0, alpha = 0.5)))
+title(main = "Sepal Width Histogram")
+par(mfrow = c(1, 1))
+
+
+#Petal Width Histogram
+par(mfrow = c(1, 1))
+hist(setosa$Petal.Width, col = rgb(1, 0, 0, alpha = 0.5), main = "Petal Width Histogram", xlab = "Petal Width", ylab = "Frequency", ylim = c(0, 30), xlim = c(0, 3), border = "white")
+hist(virginica$Petal.Width, col = rgb(0, 0, 1, alpha = 0.5), add = TRUE, border = "white")
+hist(versicolor$Petal.Width, col = rgb(0, 1, 0, alpha = 0.5), add = TRUE, border = "white")
+legend("topright", legend = levels(iris$Species), fill = c(rgb(1, 0, 0, alpha = 0.5), rgb(0, 0, 1, alpha = 0.5), rgb(0, 1, 0, alpha = 0.5)))
+title(main = "Petal Width Histogram")
+par(mfrow = c(1, 1))
+
+
+#Petal Length Histogram
+par(mfrow = c(1, 1))
+hist(setosa$Petal.Length, col = rgb(1, 0, 0, alpha = 0.5), main = "Petal Length Histogram", xlab = "Petal Length", ylab = "Frequency", ylim = c(0, 25), xlim = c(0, 8), border = "white")
+hist(virginica$Petal.Length, col = rgb(0, 0, 1, alpha = 0.5), add = TRUE, border = "white")
+hist(versicolor$Petal.Length, col = rgb(0, 1, 0, alpha = 0.5), add = TRUE, border = "white")
+legend("topright", legend = levels(iris$Species), fill = c(rgb(1, 0, 0, alpha = 0.5), rgb(0, 0, 1, alpha = 0.5), rgb(0, 1, 0, alpha = 0.5)))
+title(main = "Petal Length Histogram")
+par(mfrow = c(1, 1))
+
+
+data(iris)
+kruskal_test_results <- matrix(NA, nrow = 4, ncol = 3, dimnames = list(names(iris)[1:4], c("versicolor_vs_virginica", "virginica_vs_setosa", "setosa_vs_versicolor")))
+
+for (var in names(iris)[1:4]) {
+  kruskal_test_results[var, "versicolor_vs_virginica"] <- kruskal.test(list(iris[iris$Species == "versicolor", var], iris[iris$Species == "virginica", var]))$p.value
+  kruskal_test_results[var, "virginica_vs_setosa"] <- kruskal.test(list(iris[iris$Species == "virginica", var], iris[iris$Species == "setosa", var]))$p.value
+  kruskal_test_results[var, "setosa_vs_versicolor"] <- kruskal.test(list(iris[iris$Species == "setosa", var], iris[iris$Species == "versicolor", var]))$p.value
+}
+print(kruskal_test_results)
+
+
+#Question 2
+
+install.packages("chemometrics")
+library(chemometrics)
+data(glass)
+glass
+x=glass[,c(3,7)]
+require(robustbase)
+x.mcd=covMcd(x)
+
+drawMahal(x,center=x.mcd$center,covariance=x.mcd$cov,quantile=seq(0.1,0.9,.1))
