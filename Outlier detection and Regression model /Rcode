@@ -1,0 +1,113 @@
+##Outlier detection
+rm(list = ls())
+# Function to generate Brownian motion
+generate_brownian_motion <- function(num_steps, dt) {
+  # Generate random normally distributed increments
+  increments <- rnorm(n = num_steps, mean = 0, sd = sqrt(dt))
+  
+  # Calculate cumulative sum to get the Brownian motion
+  std_brownian_motion <- c(0, cumsum(increments))
+  
+  return(std_brownian_motion)
+}
+
+# Function to generate drifted Brownian motion
+generate_drifted_brownian_motion <- function(num_steps, dt, drift){
+  std_brownian_motion <- generate_brownian_motion(num_steps, dt)
+  
+  time_points <- seq(0, num_steps*dt, dt)
+  
+  drift_brownian_motion <- drift * time_points + std_brownian_motion
+  
+  return(drift_brownian_motion)
+}
+# Parameters
+num_steps <- 100  # Number of time steps
+dt <- 0.1         # Time step size
+drift <- 2        # Drift parameter
+outlier_prob <- 0.6 # Probability of having outliers
+n <- 100 
+
+# Function to generate data with potential outliers
+generate_data_with_outliers <- function(num_steps, dt, drift, outlier_prob){
+  index <- rbinom(1, 1, outlier_prob)
+  if (index == 1) {
+    # Generate data with drifted Brownian motion (potential outliers)
+    data <- generate_drifted_brownian_motion(num_steps, dt, drift)
+  } else {
+    # Generate data with regular Brownian motion (no outliers)
+    data <- generate_brownian_motion(num_steps, dt)
+  }
+  return(data)
+}
+
+# Generate Brownian motion data with outliers
+data <- matrix(NA, num_steps + 1, n)
+for(i in 1:n){
+  data[,i] <- generate_data_with_outliers(num_steps, dt, drift, outlier_prob)
+}
+time <- seq(0, num_steps * dt, dt)
+
+# Plotting the data
+library(ggplot2)
+final_data <- cbind(time, reshape2::melt(data))
+final_data[,3] <- as.factor(final_data[,3])
+
+ggplot()+
+  geom_line(data = final_data, aes(x = time, y = value, col = Var2))+
+  theme(legend.position = 'none')+
+  labs(x = 't',
+       y = 'X(t)',
+       title = 'Data Generated from a Mixture of Brownian Motions with Outliers')
+
+# Calculate bands based on sequence of quantiles
+upper_band <- apply(data, 1, quantile, probs = 0.95)
+lower_band <- apply(data, 1, quantile, probs = 0.05)
+# Function to detect outliers based on upper and lower bands
+detect_outliers <- function(data, upper_band, lower_band) {
+  outlier_id <- NULL
+  for (i in 1:ncol(data)) {
+    outlier_id[i] <- sum(data[, i] > upper_band | data[, i] < lower_band)
+  }
+  outlier_id <- which(outlier_id > 0)
+  return(outlier_id)
+}
+outliers =detect_outliers(data = data,upper_band = upper_band,lower_band = lower_band)
+propotion_outlier = length(outliers)/length(data)
+propotion_outlier
+
+
+## Regression model
+# Simulate data
+set.seed(123)
+n <- 100  # Number of samples
+X <- runif(n)  # Generate random X values
+epsilon <- rnorm(n, mean = 0, sd = 0.1)  # Generate random noise
+m <- function(x) sin(2 * pi * x)  # True function m(x)
+Y <- m(X) + epsilon  # Generate Y values
+
+# Nadaraya-Watson estimator
+nadaraya_watson <- function(x, X, Y, h = 0.1) {
+  K <- function(u) 1 / sqrt(2 * pi) * exp(-0.5 * u^2)  # Gaussian kernel
+  weights <- K((x - X) / h)
+  numerator <- sum(weights * Y)
+  denominator <- sum(weights)
+  return(numerator / denominator)
+}
+
+# Bandwidth parameter
+h <- 0.1
+
+# Estimate m(x) for each x
+x_values <- seq(0, 1, length.out = 100)
+m_hat_values <- sapply(x_values, function(x) nadaraya_watson(x, X, Y, h))
+
+# Plot true function and estimated function
+plot(X, Y, col = "black", main = "Nadaraya-Watson Estimation", xlab = "X", ylab = "Y")
+lines(x_values, m(x_values), col = "red", lty = 1, lwd = 2)
+lines(x_values, m_hat_values, col = "blue", lty = 2, lwd = 2)
+legend("topright", legend = c("True m(x)", "Estimated m(x)"), col = c("red", "blue"), lty = c(1, 2), lwd = 2)
+
+# Evaluate performance
+mse <- mean((m(x_values) - m_hat_values)^2)
+cat("Mean Squared Error (MSE):", mse, "\n")
