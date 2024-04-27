@@ -1,0 +1,155 @@
+## Data depth classifier
+
+# Set seed for reproducibility
+set.seed(10)
+
+# Load required libraries
+library(caret)
+library(ddalpha)
+
+# Read the dataset
+cancer_data <- read.csv('wdbc.data', header = FALSE)
+
+# Preparing the data
+Y_cancer <- as.numeric(cancer_data$V2 == "M")  # M - 1, B - 0
+X_cancer <- as.matrix(subset(cancer_data, select = -c(V1, V2)))
+X_scaled_cancer <- scale(X_cancer)
+
+n_obs <- length(Y_cancer)
+
+# Train-test split
+train_ratio <- 0.8
+train_size <- floor(train_ratio * n_obs)
+train_indices <- sample(x = 1:n_obs, size = train_size)
+
+# Train data
+Y_train <- Y_cancer[train_indices]
+X_train <- X_cancer[train_indices, ]
+X_train_scaled <- X_scaled_cancer[train_indices, ]
+
+# Test data
+Y_test <- Y_cancer[-train_indices]
+X_test <- X_cancer[-train_indices, ]
+X_test_scaled <- X_scaled_cancer[-train_indices, ]
+
+# Define depth_predict function
+predict_depth <- function(X_train, Y_train, X_test, depth_function, 
+                          use_Mahalanobis_0 = TRUE) {
+  X0_train <- X_train[Y_train == 0, ]
+  X1_train <- X_train[Y_train == 1, ]
+  
+  n0 <- nrow(X0_train)
+  n1 <- nrow(X1_train)
+  n_obs <- nrow(X_test)
+  
+  Y_pred <- numeric(n_obs)
+  
+  for (i in 1:n_obs) {
+    depth_0 <- depth_function(x = X_test[i, ], data = X0_train)
+    depth_1 <- depth_function(x = X_test[i, ], data = X1_train)
+    
+    if (depth_0 == 0 && depth_1 == 0 && use_Mahalanobis_0) {
+      depth_0 <- depth.Mahalanobis(x = X_test[i, ], data = X0_train)
+      depth_1 <- depth.Mahalanobis(x = X_test[i, ], data = X1_train)
+    }
+    
+    if (depth_1 > depth_0)
+      Y_pred[i] <- 1
+  }
+  
+  return(Y_pred)
+}
+
+# Define cross-validation function
+cross_val_depth <- function(X, Y, depth_function, 
+                            use_Mahalanobis_0 = TRUE, k = 5) {
+  n_obs <- length(Y)
+  size <- ceiling(n_obs / k)
+  cross_val_accuracy <- numeric(k)
+  
+  for (i in 1:k) {
+    lower_index <- (i - 1) * size + 1
+    upper_index <- min(i * size, n_obs)
+    
+    X_test <- X[lower_index:upper_index, ]
+    Y_test <- Y[lower_index:upper_index]
+    
+    X_train <- X[-c(lower_index:upper_index), ]
+    Y_train <- Y[-c(lower_index:upper_index)]
+    
+    Y_pred <- predict_depth(X_train, Y_train, X_test, 
+                            depth_function, use_Mahalanobis_0)
+    
+    cross_val_accuracy[i] <- mean(Y_pred == Y_test)
+  }
+  
+  output <- list(cross_val_accuracy = cross_val_accuracy,
+                 avg_accuracy = mean(cross_val_accuracy))
+  
+  return(output)
+}
+
+# Cross-validation using halfspace depth
+halfspace_cross_val <- cross_val_depth(X = X_train_scaled, Y = Y_train, 
+                                       depth_function = depth.zonoid, 
+                                       use_Mahalanobis_0 = FALSE, k = 5)
+
+halfspace_avg_accuracy <- halfspace_cross_val$avg_accuracy
+
+# Output
+print(paste("Average accuracy using halfspace depth:", halfspace_avg_accuracy))
+#heart_data
+# Read the dataset
+data_clv <- read.csv('processed.cleveland.data', header = FALSE)
+
+# Check the structure of the data
+str(data_clv)
+
+# Convert certain columns to numeric
+data_clv$V12 <- as.numeric(data_clv$V12)
+data_clv$V13 <- as.numeric(data_clv$V13)
+
+# Remove rows with missing values
+data_clv <- na.omit(data_clv)
+
+# Convert certain column to factor
+data_clv$V14 <- ifelse(data_clv$V14 %in% c(2, 3, 4), 1, data_clv$V14)
+data_clv$V14 <- as.factor(data_clv$V14)
+
+# Separate predictors and target variable
+Y_clv <- data_clv$V14
+X_clv <- data_clv[, -14]
+
+# Scale the predictors
+X_scaled_clv <- scale(X_clv)
+
+# Number of observations
+n_obs_clv <- length(Y_clv)
+
+# Train-test split
+n_train_clv <- ceiling(0.8 * n_obs_clv)
+ind_train_clv <- sample(1:n_obs_clv, size = n_train_clv)
+
+# Train data
+X_train_clv <- X_scaled_clv[ind_train_clv, ]
+Y_train_clv <- Y_clv[ind_train_clv]
+data_train_clv <- data_clv[ind_train_clv, ]
+
+# Test data
+X_test_clv <- X_scaled_clv[-ind_train_clv, ]
+Y_test_clv <- Y_clv[-ind_train_clv]
+data_test_clv <- data_clv[-ind_train_clv, ]
+
+### Depth Based Approach
+
+library(ddalpha)
+
+## Half-space depth based classification
+
+hd_depth_model_clv <- ddalpha.train(formula = V14 ~ ., data_train_clv)
+classes_hd_clv <- ddalpha.classify(hd_depth_model_clv, as.data.frame(X_test_clv))
+Y_pred_hd_clv <- unlist(classes_hd_clv)
+
+# Prediction accuracy
+(acc_depth_hd_clv <- mean(Y_pred_hd_clv == Y_test_clv))
+(mis_depth_hd_clv <- 1 - acc_depth_hd_clv)
