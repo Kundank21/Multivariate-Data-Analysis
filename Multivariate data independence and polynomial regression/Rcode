@@ -1,0 +1,221 @@
+## Multivariate data independence
+
+setwd("/Users/kundankumar/Downloads")
+
+y  = read.csv("/Users/kundankumar/Downloads/Wine_crop.csv")
+z  = read.csv("/Users/kundankumar/Downloads/Station_crop.csv")
+
+z = z[,-12]
+
+
+# Function to compute ECDF for a vector
+ecdf_vector <- function(vec) {
+  ecdf_values <- ecdf(vec)
+  return(ecdf_values(vec))
+}
+
+# Apply the ECDF function to each column of the matrix
+ecdf_matrix2 <- apply(y, 2, ecdf_vector)
+ecdf_matrix3 <- apply(z, 2, ecdf_vector)
+
+
+# List containing y and z
+data_list <- list(y = y, z = z)
+
+# Function to compute joint ECDF for a matrix
+joint_ecdf_matrix <- function(mat) {
+  ecdf_values <- ecdf(mat)
+  return(ecdf_values(mat))
+}
+
+# Apply the joint ECDF function to each matrix in the list
+joint_ecdf_result <- lapply(data_list, function(mat) {
+  apply(mat, 2, joint_ecdf_matrix)
+})
+
+
+
+
+# Find the supremum of the absolute difference
+sup_difference <- max(abs(joint_ecdf_result$y - (ecdf_matrix2 * ecdf_matrix3)))
+
+# Print or use the value as needed
+print(sup_difference)
+
+## Regression
+
+
+
+data("faithful")
+head(faithful)
+
+x <- faithful$eruptions
+y <- faithful$waiting
+
+par(mfrow = c(1,2))
+plot(x, y, main = "LOESS Regression of Degree 1")
+
+# loess
+lo_mod <- loess(y ~ x, degree = 1, span = 0.2)
+x_plot <- seq(from = min(x), to = max(x), by = 0.1)
+y_fit <- predict(lo_mod, newdata = data.frame(x = x_plot))
+lines(x_plot, y_fit, col = "red")
+
+# Calculate MSE for locfit
+predicted <- predict(lo_mod)
+mse <- mean((predicted - y)^2)
+mse
+
+mae = mean(abs(predicted - y))
+mae
+
+
+
+plot(x, y, main = "LOESS Regression of Degree 2")
+
+# loess
+lo_mod <- loess(y ~ x, degree = 2, span = 0.2)
+x_plot <- seq(from = min(x), to = max(x), by = 0.1)
+y_fit <- predict(lo_mod, newdata = data.frame(x = x_plot))
+lines(x_plot, y_fit, col = "red")
+
+# Calculate MSE for locfit
+predicted <- predict(lo_mod)
+mse <- mean((predicted - y)^2)
+mse
+
+mae = mean(abs(predicted - y))
+mae
+
+
+
+
+
+
+
+
+
+# locpoly
+m3 <- locpoly(x, y, degree = 1, bandwidth = 0.11)
+lines(m3$x, m3$y, col = "purple")
+
+# Calculate MSE for locfit
+predicted <- predict(m3)
+mse <- mean((predicted - y)^2)
+mse
+
+mae = mean(abs(predicted - y))
+mae
+
+# locpoly
+m3 <- locpoly(x, y, degree = 2, bandwidth = 0.11)
+lines(m3$x, m3$y, col = "purple")
+
+# Calculate MSE for locfit
+predicted <- predict(m3)
+mse <- mean((predicted - y)^2)
+mse
+
+mae = mean(abs(predicted - y))
+mae
+
+
+## Regression Function
+
+
+data("faithful")
+head(faithful)
+x <- faithful$eruptions
+y <- faithful$waiting
+
+r.NW <- function(h) {
+  K <- dnorm(outer(x, x, "-"), sd = h)
+  
+  # compute a leave-one-out estimate
+  diag(K) <- 0
+  
+  m.hat <- colSums(K*y) / colSums(K)
+  mean((m.hat - y)^2)
+}
+
+
+
+
+r.LL <- function(h) {
+dx <- outer(x, x, "-")
+K <- dnorm(dx, sd = h)
+
+# compute a leave-one-out estimate
+diag(K) <- 0
+
+T1 <- colSums(y*K)
+T2 <- colSums(x*dx*K)
+T3 <- colSums(x*y*K)
+T4 <- colSums(dx*K)
+B1 <- colSums(K)
+B2 <- colSums(x^2*K)
+B3 <- colSums(x*K)
+m.hat <- (T1*T2 - T3*T4) / (B1*B2 - B3^2)
+
+mean((m.hat - y)^2)
+}
+
+
+h <- 10^seq(-1.4, 0.1, length.out = 61)
+mse.nw <- numeric(length(h))
+mse.ll <- numeric(length(h))
+for (i in seq_along(h)) {
+  mse.nw[i] <- r.NW(h[i])
+  mse.ll[i] <- r.LL(h[i])
+}
+plot(h, mse.nw, log="x", type = "l", ylim = range(mse.nw, mse.ll),
+     ylab = "leave-one-out MSE")
+lines(h, mse.ll, col="red")
+
+best.h.NW <- h[which.min(mse.nw)]
+abline(v = best.h.NW)
+best.h.LL <- h[which.min(mse.ll)]
+abline(v = best.h.LL, col="red")
+
+legend("topleft", legend = c("NW", "LL"), col = c("black", "red"),
+       lwd = 2)
+
+
+
+
+
+
+
+
+
+
+
+x.tilde <- seq(1.5, 5.5, length.out = 501)
+
+K <- dnorm(outer(x, x.tilde, "-"), sd = best.h.NW)
+m.NW <- colSums(K*y) / colSums(K)
+
+dx <- outer(x, x.tilde, "-")
+K <- dnorm(dx, sd = best.h.LL)
+T1 <- colSums(y*K)
+T2 <- colSums(x*dx*K)
+T3 <- colSums(x*y*K)
+T4 <- colSums(dx*K)
+B1 <- colSums(K)
+B2 <- colSums(x^2*K)
+B3 <- colSums(x*K)
+m.LL <- (T1*T2 - T3*T4) / (B1*B2 - B3^2)
+
+
+colours <- c("#2C9CDA", "#811631")
+plot(x, y, xlim = range(x.tilde), cex = .5,
+     xlab = "eruption time [mins]",
+     ylab = "time to next eruption [mins]")
+lines(x.tilde, m.NW, col = colours[1])
+lines(x.tilde, m.LL, col = colours[2])
+legend("topleft", legend = c("NW", "LL"), col = colours,
+       lwd = 2)
+
+
+
+
