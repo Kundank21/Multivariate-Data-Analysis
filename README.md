@@ -1,4 +1,34 @@
-# Multivariate-Data-Analysis
-Conducted supervised and unsupervised learning on multivariate data comparing performance and model suitability
+# Multivariate Data Analysis and Classification Techniques
+This repository contains work on the application of supervised and unsupervised learning techniques on multivariate datasets, with a focus on outlier detection, classification, and distribution comparison.
 
-I employed statistical techniques and exploratory data analysis to compare iris species distributions in the Iris dataset. Utilizing multivariate datasets, I computed and described multivariate quantile contours, revealing key features. Additionally, I applied various classifiers (depth-based, SVM-based, K-NN-based, and kernel density function-based) on Heart Disease and Breast Cancer Wisconsin datasets, evaluating their empirical misclassification probabilities. I proposed a methodology for outlier detection and estimation in an infinite-dimensional data space, implementing it on generated data with embedded outliers. Furthermore, I developed an estimator for a regression model in L2[0, 1] space and assessed its performance through simulation studies. Independence testing on multivariate data helped determine the relationship between distributions associated with two samples. Lastly, I estimated regression functions and their derivatives using local polynomial mean and median approaches for a dataset suitable for non-parametric regression models, comparing the performance of the obtained estimators.
+Project Overview
+The primary objective of this project is to analyze multivariate data, develop classifiers, and evaluate model suitability across different methods. Key aspects include computing multivariate quantiles, outlier detection, and comparing distributions using advanced statistical techniques.
+
+Key Features
+
+Multivariate Quantiles and Outlier Detection - Employed statistical techniques and exploratory data analysis (EDA) to compute multivariate quantile contours and detect outliers using Principal Components Analysis (PCA).
+
+Classifier Development - Developed various classifiers for multidimensional data using the following methods:
+
+Data Depth Method 
+Support Vector Machines (SVM)
+K-Nearest Neighbors (K-NN)
+Random Forest
+
+
+Distribution Comparison - Designed a test based on the Data Depth method to assess whether two distributions originate from the same underlying population.
+
+Datasets Used
+Iris Dataset: Used for species distribution analysis and feature comparison.
+Heart Disease Dataset: Applied classifiers to predict heart disease presence.
+Breast Cancer Wisconsin Dataset: Evaluated empirical misclassification probabilities for breast cancer diagnosis.
+
+Methodology
+Exploratory Data Analysis (EDA) - Analyzed the structure of the datasets to identify key features, relationships, and potential outliers.
+
+Outlier Detection with PCA - Used PCA to reduce dimensionality and identify outliers in multivariate data.
+
+Classifier Evaluation - Compared model performance across various classifiers by calculating empirical misclassification probabilities.
+
+Distribution Testing - Implemented a statistical test using Data Depth techniques to determine if two datasets come from the same distribution.
+
