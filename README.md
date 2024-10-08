@@ -10,20 +10,21 @@ Multivariate Quantiles and Outlier Detection - Employed statistical techniques a
 
 Classifier Development - Developed various classifiers for multidimensional data using the following methods:
 
-Data Depth Method 
-Support Vector Machines (SVM)
-K-Nearest Neighbors (K-NN)
-Random Forest
+Data Depth Method ,Support Vector Machines (SVM), K-Nearest Neighbors (K-NN) and Random Forest
 
 
 Distribution Comparison - Designed a test based on the Data Depth method to assess whether two distributions originate from the same underlying population.
 
 Datasets Used
+
 Iris Dataset: Used for species distribution analysis and feature comparison.
+
 Heart Disease Dataset: Applied classifiers to predict heart disease presence.
+
 Breast Cancer Wisconsin Dataset: Evaluated empirical misclassification probabilities for breast cancer diagnosis.
 
 Methodology
+
 Exploratory Data Analysis (EDA) - Analyzed the structure of the datasets to identify key features, relationships, and potential outliers.
 
 Outlier Detection with PCA - Used PCA to reduce dimensionality and identify outliers in multivariate data.
